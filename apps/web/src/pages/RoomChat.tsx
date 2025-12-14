@@ -40,13 +40,54 @@ const RoomChat: React.FC = () => {
   const [isMuted, setIsMuted] = useState(false);
   const toggleMute = () => setIsMuted(prev => !prev);
 
+  const subscriptionRef = useRef<{
+    roomId: string;
+    unsubscribeMessages: () => void;
+    unsubscribePresence: () => void;
+  } | null>(null);
+
+  const pollerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const dedupeAndSortMessages = (list: MessageRow[]) => {
+    const unique: MessageRow[] = [];
+
+    for (const msg of list) {
+      const existingIndex = unique.findIndex(
+        m => m.id === msg.id || (msg.client_msg_id && m.client_msg_id === msg.client_msg_id)
+      );
+
+      if (existingIndex >= 0) {
+        unique[existingIndex] = msg;
+      } else {
+        unique.push(msg);
+      }
+    }
+
+    return unique.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+  };
+
+  const upsertMessage = (msg: MessageRow) => {
+    setMessages(prev => {
+      const next = [...prev];
+      const existingIndex = next.findIndex(
+        m => m.id === msg.id || (msg.client_msg_id && m.client_msg_id === msg.client_msg_id)
+      );
+
+      if (existingIndex >= 0) {
+        next[existingIndex] = msg;
+      } else {
+        next.push(msg);
+      }
+
+      return dedupeAndSortMessages(next);
+    });
+  };
+
   /* ---------- lifecycle ---------- */
 
   useEffect(() => {
     if (!roomId) return;
 
-    let unsubMessages: (() => void) | null = null;
-    let unsubPresence: (() => void) | null = null;
     let cancelled = false;
 
     const init = async () => {
@@ -75,35 +116,56 @@ const RoomChat: React.FC = () => {
       setRoom(r);
 
       const initial = await MessageService.loadMessages(roomId);
-      if (!cancelled) setMessages(initial);
+      if (!cancelled) setMessages(dedupeAndSortMessages(initial));
 
-      unsubMessages = MessageService.subscribe(
+      subscriptionRef.current?.unsubscribeMessages?.();
+      subscriptionRef.current?.unsubscribePresence?.();
+
+      const unsubMessages = MessageService.subscribe(
         roomId,
-        msg => {
-          setMessages(prev => {
-            const existing = prev.find(m => m.id === msg.id || m.client_msg_id === msg.client_msg_id);
-            if (existing) {
-              return prev.map(m => (m.client_msg_id === msg.client_msg_id ? msg : m));
-            }
-            return [...prev, msg];
-          });
-        },
+        upsertMessage,
         status => {
-          setConnectionStatus(status === 'SUBSCRIBED' ? 'connected' : 'disconnected');
+          if (status === 'SUBSCRIBED') setConnectionStatus('connected');
+          else if (status === 'CHANNEL_ERROR') setConnectionStatus('disconnected');
+          else setConnectionStatus('connecting');
         }
       );
 
-      unsubPresence = MessageService.subscribeToPresence(roomId, setUserCount);
+      const unsubPresence = MessageService.subscribeToPresence(roomId, setUserCount);
+
+      subscriptionRef.current = {
+        roomId,
+        unsubscribeMessages: unsubMessages,
+        unsubscribePresence: unsubPresence
+      };
     };
 
     init();
 
     return () => {
       cancelled = true;
-      unsubMessages?.();
-      unsubPresence?.();
+      subscriptionRef.current?.unsubscribeMessages?.();
+      subscriptionRef.current?.unsubscribePresence?.();
+      subscriptionRef.current = null;
     };
   }, [roomId, navigate]);
+
+  useEffect(() => {
+    if (!roomId) return;
+
+    const pollMessages = async () => {
+      const latest = await MessageService.loadMessages(roomId);
+      setMessages(prev => dedupeAndSortMessages([...prev, ...latest]));
+    };
+
+    pollMessages();
+    pollerRef.current = setInterval(pollMessages, 3000);
+
+    return () => {
+      if (pollerRef.current) clearInterval(pollerRef.current);
+      pollerRef.current = null;
+    };
+  }, [roomId]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -119,22 +181,15 @@ const RoomChat: React.FC = () => {
     setIsSending(true);
 
     const clientMsgId = crypto.randomUUID();
-    const optimistic: MessageRow = {
-      id: clientMsgId,
-      client_msg_id: clientMsgId,
-      content,
-      created_at: new Date().toISOString(),
-      room_id: roomId,
-      sender_id: currentUserId ?? 'self'
-    };
-
-    setMessages(prev => [...prev, optimistic]);
 
     try {
-      await MessageService.sendMessage(roomId, content, clientMsgId);
+      const persisted = await MessageService.sendMessage(roomId, content, clientMsgId);
+
+      // In case the realtime event arrives slightly later (or is delayed),
+      // reconcile the acknowledged row through the same state pipeline.
+      upsertMessage(persisted);
     } catch {
       setText(content);
-      setMessages(prev => prev.filter(m => m.client_msg_id !== clientMsgId));
     } finally {
       setIsSending(false);
     }
