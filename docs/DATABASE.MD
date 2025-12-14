@@ -1,192 +1,204 @@
-# EchoRoom Database Specification (DATABASE.MD)
 
-This document defines the authoritative PostgreSQL database schema for EchoRoom.
-It is shared by mobile (Expo) and web (ViteJS) clients using a single backend and socket protocol.
+# Database Reference — EchoRoom
 
----
+This document describes the **complete database design** used by EchoRoom.
 
-## Design Goals
-
-- Anonymous but authenticated access (JWT / Supabase Auth)
-- Strong room-based isolation
-- Immutable messages
-- Explicit room expiration
-- RLS-enforced authorization
-- Cross-platform consistency
+It is a **reference document**.
+The source of truth is the migration file.
 
 ---
 
-## Schema Overview
+## 1. Source of Truth
 
-Schema namespace: echo
+```
+supabase/migrations/20251214215158_remote_schema.sql
+```
 
-Tables:
-- echo.rooms
-- echo.room_members
-- echo.messages
+This file defines:
+- Tables
+- Indexes
+- Constraints
+- Functions
+- Triggers
+- RLS policies
 
 ---
 
-## Enum Types
+## 2. Tables
+
+### rooms
+Purpose:
+- Represents ephemeral chat rooms
+
+Key columns:
+- id (uuid, PK)
+- created_by (uuid)
+- created_at (timestamptz)
+- expires_at (timestamptz)
+- status (enum)
+- ttl_seconds (int)
+
+Constraints:
+- TTL bounds
+- Expiry after creation
+
+---
+
+### room_members
+Purpose:
+- Controls access
+
+Key columns:
+- room_id (uuid, PK)
+- user_id (uuid, PK)
+- joined_at
+
+Used heavily by RLS.
+
+---
+
+### messages
+Purpose:
+- Immutable chat messages
+
+Key columns:
+- id (uuid, PK)
+- room_id (uuid)
+- sender_id (uuid)
+- content (text)
+- client_msg_id (uuid)
+
+Constraints:
+- Content length
+- Deduplication via client_msg_id
+
+Replica identity:
+- FULL (for realtime correctness)
+
+---
+
+### anon_users
+Purpose:
+- Tracks ephemeral users
+
+Key columns:
+- user_id (uuid, PK)
+- last_seen_at
+- created_at
+
+Automatically cleaned up.
+
+---
+
+## 3. Indexes
+
+Indexes are optimized for:
+
+- Room-based message queries
+- Membership lookups
+- Expiry scans
+
+Notable indexes:
+- messages(room_id, created_at)
+- room_members(room_id)
+- room_members(user_id)
+- rooms(expires_at)
+
+---
+
+## 4. Custom Types
 
 ### room_status
+Enum values:
+- active
+- expired
 
-```sql
-CREATE TYPE echo.room_status AS ENUM ('active','expired');
-```
-
----
-
-## Tables
-
-### echo.rooms
-
-```sql
-CREATE TABLE echo.rooms (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  created_by uuid NOT NULL,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  expires_at timestamptz NOT NULL,
-  status echo.room_status NOT NULL DEFAULT 'active',
-  ttl_seconds int NOT NULL DEFAULT 600,
-  CONSTRAINT rooms_expires_after_created CHECK (expires_at > created_at),
-  CONSTRAINT rooms_ttl_reasonable CHECK (ttl_seconds BETWEEN 60 AND 3600)
-);
-```
+Used to enforce lifecycle correctness.
 
 ---
 
-### echo.room_members
+## 5. Functions (RPC / Helpers)
 
-```sql
-CREATE TABLE echo.room_members (
-  room_id uuid NOT NULL REFERENCES echo.rooms(id) ON DELETE CASCADE,
-  user_id uuid NOT NULL,
-  joined_at timestamptz NOT NULL DEFAULT now(),
-  PRIMARY KEY (room_id, user_id)
-);
-```
+Key functions include:
 
----
+- fn_is_member
+- fn_is_room_member
+- fn_is_room_active
+- fn_rooms_set_created_by
+- fn_rooms_set_expires_at
+- fn_messages_set_sender
+- fn_cleanup_anon_users
 
-### echo.messages
-
-```sql
-CREATE TABLE echo.messages (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  room_id uuid NOT NULL REFERENCES echo.rooms(id) ON DELETE CASCADE,
-  sender_id uuid NOT NULL,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  content text NOT NULL,
-  client_msg_id uuid NOT NULL,
-  CONSTRAINT messages_content_len CHECK (char_length(content) BETWEEN 1 AND 500),
-  CONSTRAINT messages_room_sender_client_unique
-    UNIQUE (room_id, sender_id, client_msg_id)
-);
-```
+Functions are used for:
+- RLS predicates
+- Triggers
+- Cleanup logic
 
 ---
 
-## Indexes
+## 6. Triggers
 
-```sql
-CREATE INDEX idx_rooms_expires_at ON echo.rooms (expires_at);
-CREATE INDEX idx_rooms_created_by ON echo.rooms (created_by);
-CREATE INDEX idx_room_members_user ON echo.room_members (user_id);
-CREATE INDEX idx_room_members_room ON echo.room_members (room_id);
-CREATE INDEX idx_messages_room_created ON echo.messages (room_id, created_at);
-CREATE INDEX idx_messages_sender ON echo.messages (sender_id);
-```
+Triggers enforce invariants:
 
----
+- Auto-assign creator
+- Auto-set expiry
+- Auto-add room creator as member
+- Auto-assign sender_id
+- Touch anonymous users
 
-## Triggers
-
-### Set expires_at
-
-```sql
-CREATE FUNCTION echo.fn_rooms_set_expires_at()
-RETURNS trigger AS $$
-BEGIN
-  IF new.created_by IS NULL THEN
-    new.created_by := auth.uid();
-  END IF;
-
-  IF new.expires_at IS NULL THEN
-    new.expires_at := now() + make_interval(secs => new.ttl_seconds);
-  END IF;
-
-  RETURN new;
-END;
-$$ LANGUAGE plpgsql;
-```
-
-### Auto-add creator
-
-```sql
-CREATE FUNCTION echo.fn_rooms_add_creator_member()
-RETURNS trigger AS $$
-BEGIN
-  INSERT INTO echo.room_members(room_id, user_id)
-  VALUES (new.id, new.created_by)
-  ON CONFLICT DO NOTHING;
-
-  RETURN new;
-END;
-$$ LANGUAGE plpgsql;
-```
+No business logic exists in clients.
 
 ---
 
-## Helper Functions
+## 7. Row Level Security (RLS)
 
-```sql
-CREATE FUNCTION echo.fn_is_room_active(p_room_id uuid)
-RETURNS boolean AS $$
-SELECT EXISTS (
-  SELECT 1 FROM echo.rooms
-  WHERE id = p_room_id
-    AND status = 'active'
-    AND expires_at > now()
-);
-$$ LANGUAGE sql STABLE;
-```
+RLS is enabled on:
+- rooms
+- room_members
+- messages
 
-```sql
-CREATE FUNCTION echo.fn_is_member(p_room_id uuid, p_user_id uuid)
-RETURNS boolean AS $$
-SELECT EXISTS (
-  SELECT 1 FROM echo.room_members
-  WHERE room_id = p_room_id
-    AND user_id = p_user_id
-);
-$$ LANGUAGE sql STABLE;
-```
+Rules:
+- Only room members can read/write messages
+- Only creators can update rooms
+- Users can only manage their own membership
+
+Security is **database-enforced**, not client-enforced.
 
 ---
 
-## Row Level Security Summary
+## 8. Realtime Implications
 
-- rooms: members can read, creator can insert/update
-- room_members: self-join only, active rooms only
-- messages: members can read/write, immutable
+Realtime streams:
+- Observe WAL changes
+- Respect RLS automatically
+- Stream only authorized rows
 
----
-
-## Expiration Strategy
-
-- Logical expiration via expires_at
-- Physical deletion via scheduled cleanup job
-- Cascading deletes remove members and messages
+Replica identity FULL ensures correctness.
 
 ---
 
-## Cross-Platform Contract
+## 9. PostgreSQL Compatibility
 
-This schema is used identically by:
-- Mobile apps (Expo)
-- Web apps (ViteJS)
-- Socket server
-- Tests and mocks
+The schema is PostgreSQL-compatible.
 
-No deviations are allowed.
+Supabase-specific features:
+- auth.uid()
+- Realtime engine
+
+For pure PostgreSQL:
+- Replace auth context
+- Implement realtime externally
+- Adjust RLS
+
+---
+
+## 10. Design Goals
+
+- Deterministic schema
+- Minimal surface area
+- Strong security defaults
+- Realtime-first design
+- Ephemeral data lifecycle
+
+This database is intentionally strict.
+
