@@ -1,5 +1,6 @@
 import { adapters } from '../adapters';
 import { MessageRow } from '../types';
+import { generateId } from '../utils/uuid';
 
 export const MessageService = {
   async loadMessages(roomId: string): Promise<MessageRow[]> {
@@ -7,7 +8,7 @@ export const MessageService = {
   },
 
   async sendMessage(roomId: string, content: string, clientMsgId?: string): Promise<MessageRow> {
-    const msgId = clientMsgId ?? crypto.randomUUID();
+    const msgId = clientMsgId ?? generateId();
     return adapters.messageRepository.sendMessage(roomId, content, msgId);
   },
 

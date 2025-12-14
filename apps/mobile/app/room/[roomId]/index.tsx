@@ -14,6 +14,7 @@ import { AuthService } from '@/services/authService';
 import { MessageService } from '@/services/messageService';
 import { RoomService } from '@/services/roomService';
 import { MessageRow, RoomRow } from '@/types';
+import { generateId } from '@/utils/uuid';
 
 const dedupeAndSortMessages = (list: MessageRow[]) => {
   const unique: MessageRow[] = [];
@@ -137,7 +138,7 @@ export default function RoomChatScreen() {
     const content = text.trim();
     setText('');
     setIsSending(true);
-    const clientMsgId = crypto.randomUUID();
+    const clientMsgId = generateId();
     try {
       const persisted = await MessageService.sendMessage(roomId, content, clientMsgId);
       setMessages(prev => dedupeAndSortMessages([...prev, persisted]));

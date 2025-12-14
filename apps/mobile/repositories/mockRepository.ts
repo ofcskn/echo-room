@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MessageRow, RoomRow } from '../types';
+import { generateId } from '../utils/uuid';
 import { IAuthRepository, IMessageRepository, IRoomRepository } from './interfaces';
 
 const rooms = new Map<string, RoomRow>();
@@ -50,7 +51,7 @@ export class MockAuthRepository implements IAuthRepository {
   async ensureAuthenticated(): Promise<void> {
     let mockId = await AsyncStorage.getItem('echo_mock_user_id');
     if (!mockId) {
-      mockId = crypto.randomUUID();
+      mockId = generateId();
       await AsyncStorage.setItem('echo_mock_user_id', mockId);
     }
   }
@@ -68,7 +69,7 @@ export class MockRoomRepository implements IRoomRepository {
 
   async createRoom(ttlSeconds: number): Promise<RoomRow> {
     const userId = await this.auth.getUserId();
-    const id = crypto.randomUUID();
+    const id = generateId();
     const createdAt = new Date();
     const expiresAt = new Date(createdAt.getTime() + ttlSeconds * 1000);
 
@@ -115,7 +116,7 @@ export class MockMessageRepository implements IMessageRepository {
     if (!roomMembers || !roomMembers.has(userId)) throw new Error('NOT_A_MEMBER');
 
     const msg: MessageRow = {
-      id: crypto.randomUUID(),
+      id: generateId(),
       room_id: roomId,
       sender_id: userId,
       content,
@@ -150,7 +151,7 @@ export class MockMessageRepository implements IMessageRepository {
   }
 
   subscribeToPresence(roomId: string, onCountChange: (count: number) => void): () => void {
-    const connectionId = crypto.randomUUID();
+    const connectionId = generateId();
     if (!presenceMap.has(roomId)) presenceMap.set(roomId, new Set());
     const set = presenceMap.get(roomId)!;
     set.add(connectionId);
