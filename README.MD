@@ -6,7 +6,21 @@ Mobile (Expo) and Web (ViteJS) clients share the **same socket protocol, backend
 
 There are no profiles, no message history, and no platform-specific logic at the protocol layer.
 
----
+<div style="display:flex; flex-wrap:wrap; gap:12px; align-items:flex-start">
+
+  <a href="./docs/assets/logos/original-logo.png" target="_blank">
+    <img src="./docs/assets/logos/original-logo.png"
+         alt="EchoRoom Original Logo"
+         style="max-height:80px; width:auto;" />
+  </a>
+
+  <a href="./docs/assets/logos/white-logo.png" target="_blank">
+    <img src="./docs/assets/logos/white-logo.png"
+         alt="EchoRoom White Logo"
+         style="max-height:80px; width:auto; background:#111; border-radius:8px;" />
+  </a>
+
+</div>
 
 ## Core Principles
 
@@ -16,8 +30,6 @@ There are no profiles, no message history, and no platform-specific logic at the
 - Strict room-based access control
 - Immutable messages
 - Time-limited communication by design
-
----
 
 ## Documentation Structure
 
@@ -38,8 +50,6 @@ docs/
     ├── README.MD
     └── screenshots/
 ```
-
----
 
 ## Core Technical Documents
 
@@ -63,38 +73,25 @@ These files define the **authoritative behavior** of the system.
 - **Contribution Rules**
   - [`docs/CONTRIBUTION.MD`](./docs/CONTRIBUTION.MD)
 
----
+## Screenshots
 
-## Web Client (ViteJS)
+Screenshots are documented **per platform** to keep this README lightweight and readable.
 
-- Documentation: [`docs/web/README.MD`](./docs/web/README.MD)
+Please use the platform-specific documentation below:
 
-### Screenshots
+* **Web (ViteJS) screenshots**
+  → [`docs/web/README.MD`](./docs/web/README.MD)
 
-<img src="./docs/web/screenshots/welcome.png" width="420" />
-<img src="./docs/web/screenshots/start.png" width="420" />
-<img src="./docs/web/screenshots/dashboard.png" width="420" />
-<img src="./docs/web/screenshots/join-room.png" width="420" />
-<img src="./docs/web/screenshots/messages.png" width="420" />
-<img src="./docs/web/screenshots/room-end.png" width="420" />
-<img src="./docs/web/screenshots/policies.png" width="420" />
+* **Mobile (Expo) screenshots**
+  → [`docs/mobile/README.md`](./docs/mobile/README.md)
 
----
+Each platform README contains:
 
-## Mobile Client (Expo)
+* Full UI walkthrough
+* Optimized screenshot layouts
+* Platform-specific context
 
-- Documentation: [`docs/mobile/README.md`](./docs/mobile/README.md)
-
-### Screenshots (9:16 optimized)
-
-<img src="./docs/mobile/screenshots/home_screen.png" width="220" />
-<img src="./docs/mobile/screenshots/create_room_screen.png" width="220" />
-<img src="./docs/mobile/screenshots/join_room_screen.png" width="220" />
-<img src="./docs/mobile/screenshots/room_chat_layout_screen.png" width="220" />
-<img src="./docs/mobile/screenshots/room_ended_screen.png" width="220" />
-<img src="./docs/mobile/screenshots/settings_screen.png" width="220" />
-
----
+Screenshots are intentionally not duplicated at the root level.
 
 ## Cross-Platform Contract (Non-Negotiable)
 
@@ -112,8 +109,6 @@ Platform differences are limited strictly to:
 - Input ergonomics
 
 Any divergence at the protocol, service, or data layer is a bug.
-
----
 
 ## Roadmap & Future Features
 
@@ -138,8 +133,6 @@ All future features must comply with:
 
 Features that violate these rules will not be accepted.
 
----
-
 ## Status
 
 - Protocol: defined
@@ -150,8 +143,6 @@ Features that violate these rules will not be accepted.
 - Mobile UI: documented
 
 EchoRoom is a **single system**, not two separate applications.
-
----
 
 ## Legal & Safety
 
@@ -165,8 +156,6 @@ Before using or deploying it, please review:
 
 EchoRoom does not moderate content, monitor communications, or control third-party deployments.  
 Users and deployers are solely responsible for lawful use.
-
----
 
 ## Security
 

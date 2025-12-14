@@ -231,5 +231,37 @@ This guarantees:
 - Cross-platform rooms
 - Consistent behavior
 - Long-term maintainability
-```
+
+---
+
+## Web Client (ViteJS)
+
+- Documentation: [`README.MD`](./README.MD)
+
+### Screenshots
+
+<div style="display:flex; flex-wrap:wrap; gap:16px; align-items:flex-start">
+
+  <img src="./screenshots/welcome.png"
+       style="max-width:400px; width:100%; height:auto;" />
+
+  <img src="./screenshots/start.png"
+       style="max-width:400px; width:100%; height:auto;" />
+
+  <img src="./screenshots/dashboard.png"
+       style="max-width:400px; width:100%; height:auto;" />
+
+  <img src="./screenshots/join-room.png"
+       style="max-width:400px; width:100%; height:auto;" />
+
+  <img src="./screenshots/messages.png"
+       style="max-width:400px; width:100%; height:auto;" />
+
+  <img src="./screenshots/room-end.png"
+       style="max-width:400px; width:100%; height:auto;" />
+
+  <img src="./screenshots/policies.png"
+       style="max-width:400px; width:100%; height:auto;" />
+
+</div>
 
