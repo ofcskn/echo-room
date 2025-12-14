@@ -69,7 +69,7 @@ const RoomChat: React.FC = () => {
         return;
       }
 
-      await RoomService.joinRoom(roomId);
+
       if (cancelled) return;
 
       setRoom(r);
