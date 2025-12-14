@@ -6,5 +6,5 @@ export const config = {
   supabaseUrl: env.VITE_SUPABASE_URL || "https://mock.supabase.co",
   supabaseKey: env.VITE_SUPABASE_PUBLISHABLE_DEFAULT_KEY || "mock-key",
   // FORCE MOCK DATA as requested
-  dataSource: "mock",
+  dataSource: env.VITE_DATA_SOURCE || "mock",
 };
