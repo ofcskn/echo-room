@@ -1,10 +1,10 @@
 
+import { getRecentRooms, RecentRoom } from '@/utils/recentRooms';
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/Button';
 import { Layout } from '../components/Layout';
-import { getRecentRooms, RecentRoom } from '../utils/recentRooms';
 
 const Home: React.FC = () => {
   const { t } = useTranslation();
