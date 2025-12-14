@@ -1,0 +1,5 @@
+{
+  "name": "EchoRoom",
+  "description": "Anonymous, temporary chat rooms with no profiles and expiring rooms. Your conversations disappear when you do.",
+  "requestFramePermissions": []
+}

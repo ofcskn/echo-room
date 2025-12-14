@@ -1,0 +1,160 @@
+import i18n from 'i18next';
+import { initReactI18next } from 'react-i18next';
+import LanguageDetector from 'i18next-browser-languagedetector';
+
+// Minimal resources inline for simplicity, usually in separate json files
+const resources = {
+  en: {
+    translation: {
+      "welcome": "Anonymous, ephemeral chat rooms.",
+      "subtitle": "No profiles. No history. Just now.",
+      "create_room": "Create Room",
+      "join_room": "Join Room",
+      "enter_room_id": "Enter Room ID",
+      "room_ttl": "Room Duration",
+      "5m": "5 Minutes",
+      "10m": "10 Minutes",
+      "30m": "30 Minutes",
+      "1h": "1 Hour",
+      "creating": "Creating...",
+      "joining": "Joining...",
+      "join": "Join",
+      "room_ended": "Room Ended",
+      "room_ended_desc": "This room has expired and messages are deleted.",
+      "type_message": "Type a message...",
+      "send": "Send",
+      "you": "You",
+      "connected": "Connected",
+      "connecting": "Connecting...",
+      "disconnected": "Disconnected",
+      "copy_id": "Copy ID",
+      "id_copied": "Copied!",
+      "expires_in": "Expires in {{time}}",
+      "settings": "Settings",
+      "language": "Language",
+      "theme": "Theme",
+      "dark": "Dark",
+      "light": "Light",
+      "error_room_not_found": "Room not found",
+      "error_room_expired": "Room has expired",
+    }
+  },
+  tr: {
+    translation: {
+      "welcome": "Anonim, geçici sohbet odaları.",
+      "subtitle": "Profil yok. Geçmiş yok. Sadece şimdi.",
+      "create_room": "Oda Oluştur",
+      "join_room": "Odaya Katıl",
+      "enter_room_id": "Oda ID Giriniz",
+      "room_ttl": "Oda Süresi",
+      "5m": "5 Dakika",
+      "10m": "10 Dakika",
+      "30m": "30 Dakika",
+      "1h": "1 Saat",
+      "creating": "Oluşturuluyor...",
+      "joining": "Katılınıyor...",
+      "join": "Katıl",
+      "room_ended": "Oda Sonlandı",
+      "room_ended_desc": "Bu odanın süresi doldu ve mesajlar silindi.",
+      "type_message": "Bir mesaj yaz...",
+      "send": "Gönder",
+      "you": "Sen",
+      "connected": "Bağlandı",
+      "connecting": "Bağlanıyor...",
+      "disconnected": "Bağlantı Kesildi",
+      "copy_id": "ID Kopyala",
+      "id_copied": "Kopyalandı!",
+      "expires_in": "Bitiş: {{time}}",
+      "settings": "Ayarlar",
+      "language": "Dil",
+      "theme": "Tema",
+      "dark": "Koyu",
+      "light": "Açık",
+      "error_room_not_found": "Oda bulunamadı",
+      "error_room_expired": "Oda süresi dolmuş",
+    }
+  },
+  es: {
+    translation: {
+      "welcome": "Salas de chat anónimas y efímeras.",
+      "subtitle": "Sin perfiles. Sin historial. Solo ahora.",
+      "create_room": "Crear Sala",
+      "join_room": "Unirse a Sala",
+      "enter_room_id": "Ingresar ID de Sala",
+      "room_ttl": "Duración",
+      "5m": "5 Minutos",
+      "10m": "10 Minutos",
+      "30m": "30 Minutos",
+      "1h": "1 Hora",
+      "creating": "Creando...",
+      "joining": "Uniéndose...",
+      "join": "Unirse",
+      "room_ended": "Sala Finalizada",
+      "room_ended_desc": "Esta sala ha expirado y los mensajes fueron eliminados.",
+      "type_message": "Escribe un mensaje...",
+      "send": "Enviar",
+      "you": "Tú",
+      "connected": "Conectado",
+      "connecting": "Conectando...",
+      "disconnected": "Desconectado",
+      "copy_id": "Copiar ID",
+      "id_copied": "¡Copiado!",
+      "expires_in": "Expira en {{time}}",
+      "settings": "Ajustes",
+      "language": "Idioma",
+      "theme": "Tema",
+      "dark": "Oscuro",
+      "light": "Claro",
+      "error_room_not_found": "Sala no encontrada",
+      "error_room_expired": "La sala ha expirado",
+    }
+  },
+  fr: {
+    translation: {
+      "welcome": "Salons de discussion anonymes et éphémères.",
+      "subtitle": "Pas de profil. Pas d'historique. Juste maintenant.",
+      "create_room": "Créer un Salon",
+      "join_room": "Rejoindre",
+      "enter_room_id": "Entrer ID du Salon",
+      "room_ttl": "Durée",
+      "5m": "5 Minutes",
+      "10m": "10 Minutes",
+      "30m": "30 Minutes",
+      "1h": "1 Heure",
+      "creating": "Création...",
+      "joining": "Connexion...",
+      "join": "Rejoindre",
+      "room_ended": "Salon Terminé",
+      "room_ended_desc": "Ce salon a expiré et les messages sont supprimés.",
+      "type_message": "Écrire un message...",
+      "send": "Envoyer",
+      "you": "Vous",
+      "connected": "Connecté",
+      "connecting": "Connexion...",
+      "disconnected": "Déconnecté",
+      "copy_id": "Copier ID",
+      "id_copied": "Copié !",
+      "expires_in": "Expire dans {{time}}",
+      "settings": "Paramètres",
+      "language": "Langue",
+      "theme": "Thème",
+      "dark": "Sombre",
+      "light": "Clair",
+      "error_room_not_found": "Salon introuvable",
+      "error_room_expired": "Le salon a expiré",
+    }
+  }
+};
+
+i18n
+  .use(LanguageDetector)
+  .use(initReactI18next)
+  .init({
+    resources,
+    fallbackLng: 'en',
+    interpolation: {
+      escapeValue: false
+    }
+  });
+
+export default i18n;
