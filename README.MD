@@ -65,34 +65,25 @@ These files define the **authoritative behavior** of the system.
 
 ---
 
-## Web Client (ViteJS)
+## Screenshots
 
-- Documentation: [`docs/web/README.MD`](./docs/web/README.MD)
+Screenshots are documented **per platform** to keep this README lightweight and readable.
 
-### Screenshots
+Please use the platform-specific documentation below:
 
-<img src="./docs/web/screenshots/welcome.png" width="420" />
-<img src="./docs/web/screenshots/start.png" width="420" />
-<img src="./docs/web/screenshots/dashboard.png" width="420" />
-<img src="./docs/web/screenshots/join-room.png" width="420" />
-<img src="./docs/web/screenshots/messages.png" width="420" />
-<img src="./docs/web/screenshots/room-end.png" width="420" />
-<img src="./docs/web/screenshots/policies.png" width="420" />
+* **Web (ViteJS) screenshots**
+  → [`docs/web/README.MD`](./docs/web/README.MD)
 
----
+* **Mobile (Expo) screenshots**
+  → [`docs/mobile/README.md`](./docs/mobile/README.md)
 
-## Mobile Client (Expo)
+Each platform README contains:
 
-- Documentation: [`docs/mobile/README.md`](./docs/mobile/README.md)
+* Full UI walkthrough
+* Optimized screenshot layouts
+* Platform-specific context
 
-### Screenshots (9:16 optimized)
-
-<img src="./docs/mobile/screenshots/home_screen.png" width="220" />
-<img src="./docs/mobile/screenshots/create_room_screen.png" width="220" />
-<img src="./docs/mobile/screenshots/join_room_screen.png" width="220" />
-<img src="./docs/mobile/screenshots/room_chat_layout_screen.png" width="220" />
-<img src="./docs/mobile/screenshots/room_ended_screen.png" width="220" />
-<img src="./docs/mobile/screenshots/settings_screen.png" width="220" />
+Screenshots are intentionally not duplicated at the root level.
 
 ---
 

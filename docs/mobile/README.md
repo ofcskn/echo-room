@@ -48,3 +48,32 @@ Join our community of developers creating universal apps.
 
 - [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
 - [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+
+
+---
+
+## Mobile Screenshots
+
+- The screenshots are created by Stitch by Google tool.
+
+<div style="display:flex; flex-wrap:wrap; gap:12px; align-items:flex-start">
+
+  <img src="./screenshots/home_screen.png"
+       style="max-height:400px; width:auto;" />
+
+  <img src="./screenshots/create_room_screen.png"
+       style="max-height:400px; width:auto;" />
+
+  <img src="./screenshots/join_room_screen.png"
+       style="max-height:400px; width:auto;" />
+
+  <img src="./screenshots/room_chat_layout_screen.png"
+       style="max-height:400px; width:auto;" />
+
+  <img src="./screenshots/room_ended_screen.png"
+       style="max-height:400px; width:auto;" />
+
+  <img src="./screenshots/settings_screen.png"
+       style="max-height:400px; width:auto;" />
+
+</div>
