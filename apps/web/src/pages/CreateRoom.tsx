@@ -1,13 +1,12 @@
 
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Layout } from '../components/Layout';
-import { Card } from '../components/Card';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/Button';
-import { RoomService } from '../services/roomService';
+import { Card } from '../components/Card';
+import { Layout } from '../components/Layout';
 import { AuthService } from '../services/authService';
-import { addRecentRoom } from '../utils/recentRooms';
+import { RoomService } from '../services/roomService';
 
 const CreateRoom: React.FC = () => {
   const { t } = useTranslation();
@@ -25,10 +24,10 @@ const CreateRoom: React.FC = () => {
   const handleCreate = async () => {
     setLoading(true);
     try {
-      const userId = await AuthService.getUserId();
-      const room = await RoomService.createRoom(userId, selectedTTL);
-      addRecentRoom(room, true);
+      await AuthService.ensureAuthenticated();
+      const room = await RoomService.createRoom(selectedTTL);
       navigate(`/room/${room.id}`);
+
     } catch (e) {
       console.error(e);
       alert("Failed to create room");

@@ -1,11 +1,11 @@
 
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Layout } from '../components/Layout';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '../components/Button';
-import { RoomService } from '../services/roomService';
+import { Layout } from '../components/Layout';
 import { AuthService } from '../services/authService';
+import { RoomService } from '../services/roomService';
 import { addRecentRoom } from '../utils/recentRooms';
 
 const JoinRoom: React.FC = () => {
@@ -21,10 +21,10 @@ const JoinRoom: React.FC = () => {
     setError('');
     
     try {
-      const userId = await AuthService.getUserId();
       if (roomId.length < 3) throw new Error("Invalid Room ID");
 
-      const room = await RoomService.joinRoom(userId, roomId.trim());
+      await AuthService.ensureAuthenticated();
+      const room = await RoomService.joinRoom(roomId.trim());
       addRecentRoom(room, false);
       navigate(`/room/${room.id}`);
     } catch (e: any) {

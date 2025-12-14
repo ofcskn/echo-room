@@ -1,8 +1,7 @@
-
-import { adapters } from '../adapters';
+import { adapters } from "../adapters";
 
 export const AuthService = {
-  async getUserId(): Promise<string> {
-    return await adapters.authRepository.getUserId();
+  async ensureAuthenticated(): Promise<void> {
+    await adapters.authRepository.ensureAuthenticated();
   }
 };

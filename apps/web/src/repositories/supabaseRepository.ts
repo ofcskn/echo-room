@@ -1,64 +1,81 @@
+import {
+  IAuthRepository,
+  IMessageRepository,
+  IRoomRepository
+} from "./interfaces";
 
-import { IRoomRepository, IMessageRepository, IAuthRepository } from './interfaces';
-import { RoomRow, MessageRow, CreateRoomDTO, JoinRoomDTO, SendMessageDTO } from '../types';
-import { supabase } from '../utils/supabase';
+import { MessageRow, RoomRow } from "../types";
+import { supabase } from "../utils/supabase";
+
+/* ========================= AUTH ========================= */
+
+export class SupabaseAuthRepository implements IAuthRepository {
+  async ensureAuthenticated(): Promise<void> {
+    const { data } = await supabase.auth.getSession();
+    if (data.session) return;
+
+    const { error } = await supabase.auth.signInAnonymously();
+    if (error) throw error;
+  }
+}
+
+/* ========================= ROOMS ========================= */
 
 export class SupabaseRoomRepository implements IRoomRepository {
-  async createRoom(dto: CreateRoomDTO): Promise<RoomRow> {
-    // 1. Create room
+  async createRoom(ttlSeconds: number): Promise<RoomRow> {
     const { data, error } = await supabase
-      .from('rooms')
+      .from("rooms")
       .insert({
-        created_by: dto.userId,
-        ttl_seconds: dto.ttlSeconds,
-        // Server typically handles expires_at via database function/trigger 
-        // or we calculate here if RLS allows. Assuming server trigger or client calc allowed.
-        // For this impl, we let Supabase defaults handle created_at, 
-        // but we must provide expires_at if the DB doesn't compute it.
-        // Let's compute it client side for robustness if triggers aren't set.
-        expires_at: new Date(Date.now() + dto.ttlSeconds * 1000).toISOString(), 
-        status: 'active'
+        ttl_seconds: ttlSeconds
+        // created_by → trigger (auth.uid)
+        // expires_at → trigger
+        // status → default
       })
       .select()
       .single();
 
     if (error) throw error;
-
-    // 2. Join room (creator automatically joins)
-    await this.joinRoom({ roomId: data.id, userId: dto.userId });
-
     return data as RoomRow;
   }
 
   async getRoom(roomId: string): Promise<RoomRow | null> {
     const { data, error } = await supabase
-      .from('rooms')
-      .select('*')
-      .eq('id', roomId)
+      .from("rooms")
+      .select("*")
+      .eq("id", roomId)
       .single();
-    
+
     if (error) return null;
     return data as RoomRow;
   }
 
-  async joinRoom(dto: JoinRoomDTO): Promise<void> {
+  async joinRoom(roomId: string): Promise<void> {
     const { error } = await supabase
-      .from('room_members')
-      .upsert({ room_id: dto.roomId, user_id: dto.userId }, { onConflict: 'room_id,user_id' });
-    
+      .from("room_members")
+      .insert({
+        room_id: roomId
+        // user_id → trigger or RLS via auth.uid()
+      });
+
     if (error) throw error;
   }
 }
 
+/* ========================= MESSAGES ========================= */
+
 export class SupabaseMessageRepository implements IMessageRepository {
-  async sendMessage(dto: SendMessageDTO): Promise<MessageRow> {
+  async sendMessage(
+    roomId: string,
+    content: string,
+    clientMsgId: string
+  ): Promise<MessageRow> {
     const { data, error } = await supabase
-      .from('messages')
+      .from("messages")
       .insert({
-        room_id: dto.roomId,
-        sender_id: dto.senderId,
-        content: dto.content,
-        client_msg_id: dto.clientMsgId
+        room_id: roomId,
+        content,
+        client_msg_id: clientMsgId
+        // sender_id → trigger (auth.uid)
       })
       .select()
       .single();
@@ -69,10 +86,10 @@ export class SupabaseMessageRepository implements IMessageRepository {
 
   async getMessages(roomId: string, limit = 50): Promise<MessageRow[]> {
     const { data, error } = await supabase
-      .from('messages')
-      .select('*')
-      .eq('room_id', roomId)
-      .order('created_at', { ascending: true })
+      .from("messages")
+      .select("*")
+      .eq("room_id", roomId)
+      .order("created_at", { ascending: true })
       .limit(limit);
 
     if (error) throw error;
@@ -80,18 +97,18 @@ export class SupabaseMessageRepository implements IMessageRepository {
   }
 
   subscribeToMessages(
-    roomId: string, 
+    roomId: string,
     onMessage: (msg: MessageRow) => void,
-    onStatusChange?: (status: 'SUBSCRIBED' | 'CLOSED' | 'CHANNEL_ERROR') => void
+    onStatusChange?: (status: "SUBSCRIBED" | "CLOSED" | "CHANNEL_ERROR") => void
   ): () => void {
     const channel = supabase
       .channel(`room:${roomId}`)
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
           filter: `room_id=eq.${roomId}`
         },
         (payload) => {
@@ -109,24 +126,19 @@ export class SupabaseMessageRepository implements IMessageRepository {
 
   subscribeToPresence(
     roomId: string,
-    userId: string,
     onCountChange: (count: number) => void
   ): () => void {
-    // Use a separate channel name to avoid conflicts or complex state management with the message channel
     const channel = supabase.channel(`presence:${roomId}`);
 
     channel
-      .on('presence', { event: 'sync' }, () => {
-        const newState = channel.presenceState();
-        // Supabase presence state keys are user_ids if set up that way, or random UUIDs.
-        // We just want the count of unique users or connections.
-        onCountChange(Object.keys(newState).length);
+      .on("presence", { event: "sync" }, () => {
+        const state = channel.presenceState();
+        onCountChange(Object.keys(state).length);
       })
       .subscribe(async (status) => {
-        if (status === 'SUBSCRIBED') {
-          await channel.track({ 
-            user_id: userId, 
-            online_at: new Date().toISOString() 
+        if (status === "SUBSCRIBED") {
+          await channel.track({
+            online_at: new Date().toISOString()
           });
         }
       });
@@ -134,19 +146,5 @@ export class SupabaseMessageRepository implements IMessageRepository {
     return () => {
       channel.unsubscribe();
     };
-  }
-}
-
-export class SupabaseAuthRepository implements IAuthRepository {
-  async getUserId(): Promise<string> {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user?.id) return user.id;
-
-    const { data: anonUser, error } = await supabase.auth.signInAnonymously();
-    if (error || !anonUser.user) {
-      console.error("Auth Error:", error);
-      throw new Error("Authentication failed");
-    }
-    return anonUser.user.id;
   }
 }
