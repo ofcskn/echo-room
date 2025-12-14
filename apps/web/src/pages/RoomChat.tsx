@@ -46,6 +46,8 @@ const RoomChat: React.FC = () => {
     unsubscribePresence: () => void;
   } | null>(null);
 
+  const pollerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   const dedupeAndSortMessages = (list: MessageRow[]) => {
     const unique: MessageRow[] = [];
 
@@ -147,6 +149,23 @@ const RoomChat: React.FC = () => {
       subscriptionRef.current = null;
     };
   }, [roomId, navigate]);
+
+  useEffect(() => {
+    if (!roomId) return;
+
+    const pollMessages = async () => {
+      const latest = await MessageService.loadMessages(roomId);
+      setMessages(prev => dedupeAndSortMessages([...prev, ...latest]));
+    };
+
+    pollMessages();
+    pollerRef.current = setInterval(pollMessages, 3000);
+
+    return () => {
+      if (pollerRef.current) clearInterval(pollerRef.current);
+      pollerRef.current = null;
+    };
+  }, [roomId]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
