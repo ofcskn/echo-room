@@ -17,6 +17,17 @@ export class SupabaseAuthRepository implements IAuthRepository {
     const { error } = await supabase.auth.signInAnonymously();
     if (error) throw error;
   }
+
+  async getUserId(): Promise<string> {
+    await this.ensureAuthenticated();
+
+    const { data, error } = await supabase.auth.getUser();
+    if (error) throw error;
+
+    const id = data.user?.id;
+    if (!id) throw new Error("AUTH_USER_NOT_FOUND");
+    return id;
+  }
 }
 
 /* ========================= ROOMS ========================= */

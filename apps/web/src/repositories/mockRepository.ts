@@ -55,8 +55,7 @@ export class MockAuthRepository implements IAuthRepository {
     }
   }
 
-  // Optional helper (not in interface) for adapters that need user id internally
-  async _getUserId(): Promise<string> {
+  async getUserId(): Promise<string> {
     await this.ensureAuthenticated();
     const id = localStorage.getItem("echo_mock_user_id");
     if (!id) throw new Error("MOCK_AUTH_NOT_INITIALIZED");
@@ -72,7 +71,7 @@ export class MockRoomRepository implements IRoomRepository {
   constructor(private auth: MockAuthRepository) {}
 
   async createRoom(ttlSeconds: number): Promise<RoomRow> {
-    const userId = await this.auth._getUserId();
+    const userId = await this.auth.getUserId();
 
     const id = crypto.randomUUID();
     const createdAt = new Date();
@@ -100,7 +99,7 @@ export class MockRoomRepository implements IRoomRepository {
   }
 
   async joinRoom(roomId: string): Promise<void> {
-    const userId = await this.auth._getUserId();
+    const userId = await this.auth.getUserId();
 
     const room = normalizeRoomStatus(getRoomOrThrow(roomId));
     if (isExpired(room)) throw new Error("ROOM_EXPIRED");
@@ -119,7 +118,7 @@ export class MockMessageRepository implements IMessageRepository {
   constructor(private auth: MockAuthRepository) {}
 
   async sendMessage(roomId: string, content: string, clientMsgId: string): Promise<MessageRow> {
-    const userId = await this.auth._getUserId();
+    const userId = await this.auth.getUserId();
 
     const room = normalizeRoomStatus(getRoomOrThrow(roomId));
     if (isExpired(room)) throw new Error("ROOM_EXPIRED");

@@ -23,6 +23,7 @@ const RoomChat: React.FC = () => {
 
   const [room, setRoom] = useState<RoomRow | null>(null);
   const [messages, setMessages] = useState<MessageRow[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [text, setText] = useState('');
   const [connectionStatus, setConnectionStatus] =
     useState<'connected' | 'connecting' | 'disconnected'>('connecting');
@@ -50,7 +51,10 @@ const RoomChat: React.FC = () => {
 
     const init = async () => {
       await AuthService.ensureAuthenticated();
+      const uid = await AuthService.getUserId();
       if (cancelled) return;
+
+      setCurrentUserId(uid);
 
       const r = await RoomService.getRoom(roomId);
       if (cancelled) return;
@@ -65,6 +69,9 @@ const RoomChat: React.FC = () => {
         return;
       }
 
+      await RoomService.joinRoom(roomId);
+      if (cancelled) return;
+
       setRoom(r);
 
       const initial = await MessageService.loadMessages(roomId);
@@ -73,7 +80,13 @@ const RoomChat: React.FC = () => {
       unsubMessages = MessageService.subscribe(
         roomId,
         msg => {
-          setMessages(prev => (prev.some(m => m.id === msg.id) ? prev : [...prev, msg]));
+          setMessages(prev => {
+            const existing = prev.find(m => m.id === msg.id || m.client_msg_id === msg.client_msg_id);
+            if (existing) {
+              return prev.map(m => (m.client_msg_id === msg.client_msg_id ? msg : m));
+            }
+            return [...prev, msg];
+          });
         },
         status => {
           setConnectionStatus(status === 'SUBSCRIBED' ? 'connected' : 'disconnected');
@@ -105,10 +118,23 @@ const RoomChat: React.FC = () => {
     setText('');
     setIsSending(true);
 
+    const clientMsgId = crypto.randomUUID();
+    const optimistic: MessageRow = {
+      id: clientMsgId,
+      client_msg_id: clientMsgId,
+      content,
+      created_at: new Date().toISOString(),
+      room_id: roomId,
+      sender_id: currentUserId ?? 'self'
+    };
+
+    setMessages(prev => [...prev, optimistic]);
+
     try {
-      await MessageService.sendMessage(roomId, content);
+      await MessageService.sendMessage(roomId, content, clientMsgId);
     } catch {
       setText(content);
+      setMessages(prev => prev.filter(m => m.client_msg_id !== clientMsgId));
     } finally {
       setIsSending(false);
     }
@@ -296,7 +322,7 @@ const RoomChat: React.FC = () => {
       <div className="flex-1 overflow-y-auto px-4 pt-20 pb-4 space-y-4 bg-transparent z-10 scroll-smooth">
         <SystemMessage text={t('session_started')} />
         {messages.map(m => (
-          <MessageBubble key={m.id} message={m} isSelf={m.sender_id === room.user_id /* replace with your userId */} />
+          <MessageBubble key={`${m.id}-${m.client_msg_id}`} message={m} isSelf={m.sender_id === currentUserId} />
         ))}
         <div ref={bottomRef} className="h-1" />
       </div>

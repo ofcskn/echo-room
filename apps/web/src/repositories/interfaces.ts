@@ -29,4 +29,5 @@ export interface IMessageRepository {
 
 export interface IAuthRepository {
   ensureAuthenticated(): Promise<void>;
+  getUserId(): Promise<string>;
 }
