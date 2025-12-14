@@ -6,7 +6,21 @@ Mobile (Expo) and Web (ViteJS) clients share the **same socket protocol, backend
 
 There are no profiles, no message history, and no platform-specific logic at the protocol layer.
 
----
+<div style="display:flex; flex-wrap:wrap; gap:12px; align-items:flex-start">
+
+  <a href="./docs/assets/logos/original-logo.png" target="_blank">
+    <img src="./docs/assets/logos/original-logo.png"
+         alt="EchoRoom Original Logo"
+         style="max-height:80px; width:auto;" />
+  </a>
+
+  <a href="./docs/assets/logos/white-logo.png" target="_blank">
+    <img src="./docs/assets/logos/white-logo.png"
+         alt="EchoRoom White Logo"
+         style="max-height:80px; width:auto; background:#111; border-radius:8px;" />
+  </a>
+
+</div>
 
 ## Core Principles
 
@@ -16,8 +30,6 @@ There are no profiles, no message history, and no platform-specific logic at the
 - Strict room-based access control
 - Immutable messages
 - Time-limited communication by design
-
----
 
 ## Documentation Structure
 
@@ -38,8 +50,6 @@ docs/
     ├── README.MD
     └── screenshots/
 ```
-
----
 
 ## Core Technical Documents
 
@@ -63,8 +73,6 @@ These files define the **authoritative behavior** of the system.
 - **Contribution Rules**
   - [`docs/CONTRIBUTION.MD`](./docs/CONTRIBUTION.MD)
 
----
-
 ## Screenshots
 
 Screenshots are documented **per platform** to keep this README lightweight and readable.
@@ -85,8 +93,6 @@ Each platform README contains:
 
 Screenshots are intentionally not duplicated at the root level.
 
----
-
 ## Cross-Platform Contract (Non-Negotiable)
 
 Mobile and web clients **must**:
@@ -103,8 +109,6 @@ Platform differences are limited strictly to:
 - Input ergonomics
 
 Any divergence at the protocol, service, or data layer is a bug.
-
----
 
 ## Roadmap & Future Features
 
@@ -129,8 +133,6 @@ All future features must comply with:
 
 Features that violate these rules will not be accepted.
 
----
-
 ## Status
 
 - Protocol: defined
@@ -141,8 +143,6 @@ Features that violate these rules will not be accepted.
 - Mobile UI: documented
 
 EchoRoom is a **single system**, not two separate applications.
-
----
 
 ## Legal & Safety
 
@@ -156,8 +156,6 @@ Before using or deploying it, please review:
 
 EchoRoom does not moderate content, monitor communications, or control third-party deployments.  
 Users and deployers are solely responsible for lawful use.
-
----
 
 ## Security
 
