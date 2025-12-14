@@ -21,3 +21,7 @@ export interface IMessageRepository {
     onCountChange: (count: number) => void
   ): () => void;
 }
+
+export interface IAuthRepository {
+  getUserId(): Promise<string>;
+}

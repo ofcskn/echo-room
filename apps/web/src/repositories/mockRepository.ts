@@ -1,5 +1,5 @@
 
-import { IRoomRepository, IMessageRepository } from './interfaces';
+import { IRoomRepository, IMessageRepository, IAuthRepository } from './interfaces';
 import { RoomRow, MessageRow, CreateRoomDTO, JoinRoomDTO, SendMessageDTO } from '../types';
 
 // In-memory store
@@ -133,5 +133,17 @@ export class MockMessageRepository implements IMessageRepository {
       }
       bus.removeEventListener(eventName, handler);
     };
+  }
+}
+
+export class MockAuthRepository implements IAuthRepository {
+  async getUserId(): Promise<string> {
+    // Return a stable mock ID for the session to persist identity across refreshes
+    let mockId = localStorage.getItem('echo_mock_user_id');
+    if (!mockId) {
+      mockId = crypto.randomUUID();
+      localStorage.setItem('echo_mock_user_id', mockId);
+    }
+    return mockId;
   }
 }

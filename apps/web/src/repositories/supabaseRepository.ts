@@ -1,5 +1,5 @@
 
-import { IRoomRepository, IMessageRepository } from './interfaces';
+import { IRoomRepository, IMessageRepository, IAuthRepository } from './interfaces';
 import { RoomRow, MessageRow, CreateRoomDTO, JoinRoomDTO, SendMessageDTO } from '../types';
 import { supabase } from '../utils/supabase';
 
@@ -134,5 +134,19 @@ export class SupabaseMessageRepository implements IMessageRepository {
     return () => {
       channel.unsubscribe();
     };
+  }
+}
+
+export class SupabaseAuthRepository implements IAuthRepository {
+  async getUserId(): Promise<string> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user?.id) return user.id;
+
+    const { data: anonUser, error } = await supabase.auth.signInAnonymously();
+    if (error || !anonUser.user) {
+      console.error("Auth Error:", error);
+      throw new Error("Authentication failed");
+    }
+    return anonUser.user.id;
   }
 }

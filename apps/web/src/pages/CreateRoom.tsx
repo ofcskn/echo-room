@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -8,18 +9,18 @@ import { RoomService } from '../services/roomService';
 import { AuthService } from '../services/authService';
 import { addRecentRoom } from '../utils/recentRooms';
 
-const TTL_OPTIONS = [
-  { label: '5', sub: 'MIN', value: 300 },
-  { label: '10', sub: 'MIN', value: 600 },
-  { label: '15', sub: 'MIN', value: 900 },
-  { label: '30', sub: 'MIN', value: 1800 },
-];
-
 const CreateRoom: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [selectedTTL, setSelectedTTL] = useState(300);
+
+  const TTL_OPTIONS = [
+    { label: '5', sub: t('min'), value: 300 },
+    { label: '10', sub: t('min'), value: 600 },
+    { label: '15', sub: t('min'), value: 900 },
+    { label: '30', sub: t('min'), value: 1800 },
+  ];
 
   const handleCreate = async () => {
     setLoading(true);
@@ -40,8 +41,8 @@ const CreateRoom: React.FC = () => {
     <Layout>
       <div className="flex-1 px-4 flex flex-col justify-center pb-20">
         <div className="text-center mb-10">
-          <h2 className="text-3xl font-bold dark:text-white mb-2">Start a temporary <br/><span className="text-brand-DEFAULT">conversation.</span></h2>
-          <p className="text-gray-500">No profiles. No history. Just chat.</p>
+          <h2 className="text-3xl font-bold dark:text-white mb-2">{t('start_temporary')} <br/><span className="text-brand-DEFAULT">{t('conversation')}</span></h2>
+          <p className="text-gray-500">{t('create_subtitle')}</p>
         </div>
 
         <Card className="bg-gradient-to-b from-white to-gray-50 dark:from-brand-surface dark:to-black">
@@ -71,7 +72,7 @@ const CreateRoom: React.FC = () => {
             {t('create_room')} →
           </Button>
           <p className="text-center text-xs text-gray-400 dark:text-gray-600 mt-4">
-            Rooms expire and are permanently deleted.
+            {t('rooms_expire_warning')}
           </p>
         </Card>
       </div>
